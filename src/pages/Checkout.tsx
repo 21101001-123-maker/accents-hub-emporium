@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import OrderSummary from "@/components/OrderSummary";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -77,9 +78,12 @@ const Checkout = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <main className="flex-grow container mx-auto px-4 py-8 max-w-2xl">
-        {/* Login Icon */}
-        <div className="flex justify-end mb-6">
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left Column - Form */}
+          <div className="flex-1 max-w-2xl">
+            {/* Login Icon */}
+            <div className="flex justify-end mb-6">
           <button
             onClick={() => navigate("/auth")}
             className="flex items-center gap-2 text-foreground hover:text-secondary transition-colors"
@@ -271,13 +275,22 @@ const Checkout = () => {
           </RadioGroup>
         </section>
 
-        {/* Complete Order Button */}
-        <Button
-          onClick={handleCompleteOrder}
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg font-semibold"
-        >
-          Complete Order
-        </Button>
+            {/* Complete Order Button */}
+            <Button
+              onClick={handleCompleteOrder}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg font-semibold"
+            >
+              Complete Order
+            </Button>
+          </div>
+
+          {/* Right Column - Order Summary */}
+          <div className="lg:w-96">
+            <div className="lg:sticky lg:top-8">
+              <OrderSummary shippingCost={shippingMethod === "cod" ? 250 : 0} />
+            </div>
+          </div>
+        </div>
       </main>
 
       <Footer />
