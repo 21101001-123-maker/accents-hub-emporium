@@ -73,15 +73,16 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(35,35%,90%)]">
-      {/* Header */}
-      <header className="bg-primary py-4 px-8">
+    <div className="min-h-screen bg-[hsl(30,25%,85%)]">
+      {/* Header - Fixed at top, full width */}
+      <header className="fixed top-0 left-0 right-0 bg-primary py-4 px-8 z-50">
         <div className="flex justify-end">
-          <span className="text-primary-foreground text-xl font-semibold">Accents Hub</span>
+          <span className="text-primary-foreground text-xl font-semibold">AccentsHub</span>
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row">
+      {/* Main content with top padding to account for fixed header */}
+      <div className="flex flex-col lg:flex-row pt-16">
         {/* Left Column - Form */}
         <div className="flex-1 min-h-screen overflow-y-auto lg:pr-[400px]">
         <div className="max-w-xl ml-auto mr-8 lg:mr-16 px-6 py-8">
@@ -294,9 +295,9 @@ const Checkout = () => {
         </div>
       </div>
 
-        {/* Right Column - Order Summary (Fixed) */}
-        <div className="lg:w-[400px] lg:fixed lg:right-0 lg:top-0 lg:h-screen lg:overflow-y-auto shadow-xl bg-[hsl(30,25%,85%)]">
-          <div className="p-8 pt-20">
+        {/* Right Column - Order Summary (Fixed, below header) */}
+        <div className="lg:w-[400px] lg:fixed lg:right-0 lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto shadow-xl bg-[hsl(30,25%,85%)]">
+          <div className="p-8">
             <OrderSummary shippingCost={shippingMethod === "cod" ? 250 : 0} />
           </div>
         </div>
