@@ -75,8 +75,8 @@ const Checkout = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Column - Form */}
-      <div className="flex-1 bg-[hsl(30,30%,95%)] min-h-screen overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="flex-1 bg-[hsl(30,30%,95%)] min-h-screen overflow-y-auto lg:pr-[400px]">
+        <div className="max-w-xl ml-auto mr-8 lg:mr-16 px-6 py-8">
           {/* Login Icon */}
           <div className="flex justify-end mb-6">
             <button
@@ -287,8 +287,8 @@ const Checkout = () => {
       </div>
 
       {/* Right Column - Order Summary (Fixed) */}
-      <div className="lg:w-96 bg-[hsl(35,35%,90%)] lg:fixed lg:right-0 lg:top-0 lg:h-screen lg:overflow-y-auto">
-        <div className="p-6">
+      <div className="lg:w-[400px] bg-[hsl(35,35%,90%)] lg:fixed lg:right-0 lg:top-0 lg:h-screen lg:overflow-y-auto shadow-xl">
+        <div className="p-8">
           <OrderSummary shippingCost={shippingMethod === "cod" ? 250 : 0} />
         </div>
       </div>
