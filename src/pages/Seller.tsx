@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -165,130 +166,145 @@ const Seller = () => {
       <Navbar />
       
       <main className="flex-1 py-12 px-4">
-        <div className="container mx-auto max-w-5xl">
+        <div className="container mx-auto">
           <h1 className="text-3xl font-bold text-foreground mb-8">Seller Dashboard</h1>
           
-          {/* Add/Edit Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="mb-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <Label htmlFor="productId">Product ID</Label>
-                <Input 
-                  id="productId" 
-                  value={editingId || "Auto-generated"} 
-                  readOnly 
-                  className="bg-muted"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input id="name" {...register("name")} required />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" {...register("description")} rows={3} />
-              </div>
-              
-              <div>
-                <Label htmlFor="price">Price *</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  {...register("price", { valueAsNumber: true })}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="quantity">Quantity *</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  {...register("quantity", { valueAsNumber: true })}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="discount">Discount (%)</Label>
-                <Input
-                  id="discount"
-                  type="number"
-                  step="0.01"
-                  {...register("discount", { valueAsNumber: true })}
-                />
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Side - Product List Table */}
+            <div className="lg:col-span-2 order-2 lg:order-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Product List</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <p>Loading products...</p>
+                  ) : products.length === 0 ? (
+                    <p className="text-muted-foreground">No products added yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead>ID</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Quantity</TableHead>
+                            <TableHead>Discount</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {products.map((product) => (
+                            <TableRow key={product.id}>
+                              <TableCell className="font-mono text-xs">{product.id.slice(0, 8)}...</TableCell>
+                              <TableCell className="font-medium">{product.name}</TableCell>
+                              <TableCell>Rs {product.price.toFixed(2)}</TableCell>
+                              <TableCell>{product.quantity}</TableCell>
+                              <TableCell>{product.discount ?? 0}%</TableCell>
+                              <TableCell className="max-w-[150px] truncate">
+                                {product.description || "N/A"}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleEdit(product)}
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                                  >
+                                    Update
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleDelete(product.id)}
+                                    className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
             
-            <div className="flex gap-4">
-              <Button type="submit" className="px-8">
-                {editingId ? "Save" : "Add"}
-              </Button>
-              <Button type="button" variant="outline" onClick={handleCancel} className="px-8">
-                Cancel
-              </Button>
+            {/* Right Side - Add/Edit Product Form */}
+            <div className="lg:col-span-1 order-1 lg:order-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{editingId ? "Update Product" : "Add Product"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <div>
+                      <Label htmlFor="productId">Product ID</Label>
+                      <Input 
+                        id="productId" 
+                        value={editingId || "Auto-generated"} 
+                        readOnly 
+                        className="bg-muted"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="name">Name *</Label>
+                      <Input id="name" {...register("name")} required />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="price">Price *</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        {...register("price", { valueAsNumber: true })}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="quantity">Quantity *</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        {...register("quantity", { valueAsNumber: true })}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="discount">Discount (%)</Label>
+                      <Input
+                        id="discount"
+                        type="number"
+                        step="0.01"
+                        {...register("discount", { valueAsNumber: true })}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea id="description" {...register("description")} rows={3} />
+                    </div>
+                    
+                    <div className="flex gap-2 pt-4">
+                      <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90">
+                        {editingId ? "Save" : "Add"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={handleCancel} className="flex-1">
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
-          </form>
-          
-          {/* Product List Table */}
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Product List</h2>
-            {loading ? (
-              <p>Loading products...</p>
-            ) : products.length === 0 ? (
-              <p className="text-muted-foreground">No products added yet.</p>
-            ) : (
-              <div className="overflow-x-auto border border-border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Product ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Discount</TableHead>
-                      <TableHead>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-mono text-xs">{product.id.slice(0, 8)}...</TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {product.description || "N/A"}
-                        </TableCell>
-                        <TableCell>Rs {product.price.toFixed(2)}</TableCell>
-                        <TableCell>{product.quantity}</TableCell>
-                        <TableCell>{product.discount ?? 0}%</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleEdit(product)}
-                            >
-                              Update
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(product.id)}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
           </div>
         </div>
       </main>
