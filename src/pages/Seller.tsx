@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ interface ProductForm {
   quantity: number;
   description: string;
   discount: number;
-  image_url: string;
 }
 
 interface Product {
@@ -27,15 +25,12 @@ interface Product {
   quantity: number;
   description: string | null;
   discount: number;
-  image_url: string | null;
 }
 
 const Seller = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSeller, setIsSeller] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
   
   const { register, handleSubmit, reset, setValue } = useForm<ProductForm>({
@@ -45,42 +40,12 @@ const Seller = () => {
       quantity: 0,
       description: "",
       discount: 0,
-      image_url: "",
     },
   });
 
   useEffect(() => {
-    checkSellerAccess();
-  }, []);
-
-  const checkSellerAccess = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .eq("role", "seller")
-      .single();
-
-    if (!data) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have seller privileges",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-
-    setIsSeller(true);
     fetchProducts();
-  };
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -115,7 +80,6 @@ const Seller = () => {
             quantity: data.quantity,
             description: data.description,
             discount: data.discount,
-            image_url: data.image_url || null,
           })
           .eq("id", editingId);
 
@@ -135,7 +99,6 @@ const Seller = () => {
             quantity: data.quantity,
             description: data.description,
             discount: data.discount,
-            image_url: data.image_url || null,
             created_by: session?.user.id,
           });
 
@@ -165,7 +128,6 @@ const Seller = () => {
     setValue("quantity", product.quantity);
     setValue("description", product.description || "");
     setValue("discount", product.discount ?? 0);
-    setValue("image_url", product.image_url || "");
   };
 
   const handleDelete = async (id: string) => {
@@ -198,23 +160,17 @@ const Seller = () => {
     setEditingId(null);
   };
 
-  if (!isSeller) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       
       <main className="flex-1 py-12 px-4">
         <div className="container mx-auto max-w-5xl">
-          {/* Page Heading */}
           <h1 className="text-3xl font-bold text-foreground mb-8">Seller Dashboard</h1>
           
           {/* Add/Edit Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="mb-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {/* Product ID - Read only */}
               <div>
                 <Label htmlFor="productId">Product ID</Label>
                 <Input 
@@ -265,14 +221,8 @@ const Seller = () => {
                   {...register("discount", { valueAsNumber: true })}
                 />
               </div>
-              
-              <div>
-                <Label htmlFor="image_url">Image URL</Label>
-                <Input id="image_url" {...register("image_url")} />
-              </div>
             </div>
             
-            {/* Form Buttons */}
             <div className="flex gap-4">
               <Button type="submit" className="px-8">
                 {editingId ? "Save" : "Add"}
