@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Upload, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -26,12 +27,17 @@ interface Product {
   quantity: number;
   description: string | null;
   discount: number;
+  image_url: string | null;
 }
 
 const Seller = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   const { register, handleSubmit, reset, setValue } = useForm<ProductForm>({
@@ -68,6 +74,66 @@ const Seller = () => {
     }
   };
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+
+    try {
+      // Create preview
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
+
+      // Upload to storage
+      const url = await uploadImage(file);
+      setImageUrl(url);
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Error",
+        description: error.message || "Failed to upload image",
+        variant: "destructive",
+      });
+      setImagePreview(null);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setImageUrl(null);
+    setImagePreview(null);
+  };
+
   const onSubmit = async (data: ProductForm) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -81,6 +147,7 @@ const Seller = () => {
             quantity: data.quantity,
             description: data.description,
             discount: data.discount,
+            image_url: imageUrl,
           })
           .eq("id", editingId);
 
@@ -100,6 +167,7 @@ const Seller = () => {
             quantity: data.quantity,
             description: data.description,
             discount: data.discount,
+            image_url: imageUrl,
             created_by: session?.user.id,
           });
 
@@ -112,6 +180,8 @@ const Seller = () => {
       }
       
       reset();
+      setImageUrl(null);
+      setImagePreview(null);
       fetchProducts();
     } catch (error: any) {
       toast({
@@ -129,6 +199,8 @@ const Seller = () => {
     setValue("quantity", product.quantity);
     setValue("description", product.description || "");
     setValue("discount", product.discount ?? 0);
+    setImageUrl(product.image_url);
+    setImagePreview(product.image_url);
   };
 
   const handleDelete = async (id: string) => {
@@ -159,6 +231,8 @@ const Seller = () => {
   const handleCancel = () => {
     reset();
     setEditingId(null);
+    setImageUrl(null);
+    setImagePreview(null);
   };
 
   return (
@@ -187,6 +261,7 @@ const Seller = () => {
                         <TableHeader>
                           <TableRow className="bg-muted/50">
                             <TableHead>ID</TableHead>
+                            <TableHead>Image</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Price</TableHead>
                             <TableHead>Quantity</TableHead>
@@ -199,6 +274,17 @@ const Seller = () => {
                           {products.map((product) => (
                             <TableRow key={product.id}>
                               <TableCell className="font-mono text-xs">{product.id.slice(0, 8)}...</TableCell>
+                              <TableCell>
+                                {product.image_url ? (
+                                  <img 
+                                    src={product.image_url} 
+                                    alt={product.name}
+                                    className="w-12 h-12 object-cover rounded"
+                                  />
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">No image</span>
+                                )}
+                              </TableCell>
                               <TableCell className="font-medium">{product.name}</TableCell>
                               <TableCell>Rs {product.price.toFixed(2)}</TableCell>
                               <TableCell>{product.quantity}</TableCell>
@@ -292,9 +378,49 @@ const Seller = () => {
                       <Label htmlFor="description">Description</Label>
                       <Textarea id="description" {...register("description")} rows={3} />
                     </div>
+
+                    {/* Image Upload Section */}
+                    <div>
+                      <Label>Product Image</Label>
+                      <div className="mt-2 space-y-3">
+                        {imagePreview ? (
+                          <div className="relative inline-block">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="w-24 h-24 object-cover rounded-lg border border-border"
+                            />
+                            <button
+                              type="button"
+                              onClick={removeImage}
+                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div 
+                            className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary transition-colors"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileSelect}
+                              className="hidden"
+                            />
+                            <Upload className="mx-auto h-6 w-6 text-muted-foreground mb-1" />
+                            <p className="text-sm text-muted-foreground">
+                              {uploading ? "Uploading..." : "Click to upload"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     
                     <div className="flex gap-2 pt-4">
-                      <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90">
+                      <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90" disabled={uploading}>
                         {editingId ? "Save" : "Add"}
                       </Button>
                       <Button type="button" variant="outline" onClick={handleCancel} className="flex-1">
