@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OrderSummary from "@/components/OrderSummary";
 import { Input } from "@/components/ui/input";
@@ -16,26 +16,71 @@ import {
 import { User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-  "Quetta",
-  "Sialkot",
-  "Gujranwala",
-];
+// Country to cities mapping
+const countryCities: Record<string, string[]> = {
+  Pakistan: [
+    "Karachi",
+    "Lahore",
+    "Islamabad",
+    "Rawalpindi",
+    "Faisalabad",
+    "Multan",
+    "Peshawar",
+    "Quetta",
+    "Sialkot",
+    "Gujranwala",
+  ],
+  India: [
+    "Mumbai",
+    "Delhi",
+    "Bangalore",
+    "Hyderabad",
+    "Chennai",
+    "Kolkata",
+    "Pune",
+    "Ahmedabad",
+    "Jaipur",
+    "Lucknow",
+  ],
+  Bangladesh: [
+    "Dhaka",
+    "Chittagong",
+    "Khulna",
+    "Rajshahi",
+    "Sylhet",
+    "Rangpur",
+    "Comilla",
+    "Gazipur",
+    "Narayanganj",
+    "Mymensingh",
+  ],
+  "Sri Lanka": [
+    "Colombo",
+    "Kandy",
+    "Galle",
+    "Jaffna",
+    "Negombo",
+    "Trincomalee",
+    "Batticaloa",
+    "Anuradhapura",
+    "Matara",
+    "Ratnapura",
+  ],
+  Nepal: [
+    "Kathmandu",
+    "Pokhara",
+    "Lalitpur",
+    "Bharatpur",
+    "Biratnagar",
+    "Birgunj",
+    "Dharan",
+    "Butwal",
+    "Hetauda",
+    "Janakpur",
+  ],
+};
 
-const countries = [
-  "Pakistan",
-  "India",
-  "Bangladesh",
-  "Sri Lanka",
-  "Nepal",
-];
+const countries = Object.keys(countryCities);
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -45,15 +90,26 @@ const Checkout = () => {
   const [emailOffers, setEmailOffers] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [country, setCountry] = useState("");
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [address, setAddress] = useState("");
-  const [cityInput, setCityInput] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [phone, setPhone] = useState("");
   const [saveInfo, setSaveInfo] = useState(false);
   const [shippingMethod, setShippingMethod] = useState("cod");
   const [billingAddress, setBillingAddress] = useState("same");
+
+  // Update available cities when country changes
+  useEffect(() => {
+    if (country && countryCities[country]) {
+      setAvailableCities(countryCities[country]);
+      setSelectedCity(""); // Reset city when country changes
+    } else {
+      setAvailableCities([]);
+      setSelectedCity("");
+    }
+  }, [country]);
 
   const handleCompleteOrder = () => {
     if (!email || !firstName || !lastName || !address || !phone || !selectedCity || !country) {
@@ -69,7 +125,7 @@ const Checkout = () => {
       title: "Order Placed!",
       description: "Your order has been placed successfully.",
     });
-    navigate("/");
+    navigate("/home");
   };
 
   return (
@@ -126,31 +182,37 @@ const Checkout = () => {
             <h2 className="text-xl font-semibold text-foreground mb-4">Delivery</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground mb-2 block">Select City</Label>
-                  <Select value={selectedCity} onValueChange={setSelectedCity}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select City" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-border z-50">
-                      {cities.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Country first */}
                 <div>
                   <Label className="text-sm text-muted-foreground mb-2 block">Country/Region</Label>
                   <Select value={country} onValueChange={setCountry}>
                     <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Country/Region" />
+                      <SelectValue placeholder="Select Country" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-border z-50">
                       {countries.map((c) => (
                         <SelectItem key={c} value={c}>
                           {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* City second - depends on country */}
+                <div>
+                  <Label className="text-sm text-muted-foreground mb-2 block">Select City</Label>
+                  <Select 
+                    value={selectedCity} 
+                    onValueChange={setSelectedCity}
+                    disabled={!country}
+                  >
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder={country ? "Select City" : "Select country first"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border border-border z-50">
+                      {availableCities.map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -181,31 +243,19 @@ const Checkout = () => {
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Input
-                    placeholder="City"
-                    value={cityInput}
-                    onChange={(e) => setCityInput(e.target.value)}
-                    className="bg-white"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Please select city from dropdown
-                  </p>
-                </div>
                 <Input
                   placeholder="Postal Code (optional)"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   className="bg-white"
                 />
+                <Input
+                  placeholder="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-white"
+                />
               </div>
-
-              <Input
-                placeholder="Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="bg-white"
-              />
 
               <div className="flex items-center space-x-2">
                 <Checkbox
