@@ -70,7 +70,7 @@ const Auth = () => {
       if (user.role === "seller") {
         navigate("/seller");
       } else {
-        navigate("/");
+        navigate("/home");
       }
     }
     // Trigger title animation after mount
@@ -98,7 +98,7 @@ const Auth = () => {
       if (userData.role === "seller") {
         navigate("/seller");
       } else {
-        navigate("/");
+        navigate("/home");
       }
     } catch (error: any) {
       toast({ title: "Login Error", description: error.message, variant: "destructive" });
