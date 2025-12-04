@@ -8,9 +8,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import authImage from "@/assets/auth-shopping.jpg";
 
 const API = "http://127.0.0.1:8000";
+
+const welcomeText = "Welcome to Accents Hub, create an account for a happy shopping experience...";
+
+const AnimatedText = () => {
+  const [visibleWords, setVisibleWords] = useState(0);
+  const words = welcomeText.split(" ");
+
+  useEffect(() => {
+    if (visibleWords < words.length) {
+      const timer = setTimeout(() => {
+        setVisibleWords((prev) => prev + 1);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [visibleWords, words.length]);
+
+  return (
+    <p className="text-lg md:text-xl text-secondary/90 leading-relaxed">
+      {words.map((word, index) => (
+        <span
+          key={index}
+          className={`inline-block mr-2 transition-all duration-300 ${
+            index < visibleWords
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-2"
+          }`}
+        >
+          {word}
+        </span>
+      ))}
+    </p>
+  );
+};
 
 const Auth = () => {
   const location = useLocation();
@@ -21,6 +53,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showTitle, setShowTitle] = useState(false);
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -40,6 +73,9 @@ const Auth = () => {
         navigate("/");
       }
     }
+    // Trigger title animation after mount
+    const timer = setTimeout(() => setShowTitle(true), 100);
+    return () => clearTimeout(timer);
   }, [navigate]);
 
   const handleLogin = async (data: LoginFormData) => {
@@ -99,19 +135,17 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Left Side - Image */}
-      <div className="hidden lg:flex lg:w-1/2 bg-secondary relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
-        <div className="relative w-full h-full flex items-center justify-center p-12">
-          <div className="relative">
-            {/* Decorative frame */}
-            <div className="absolute -top-4 -left-4 w-full h-full border-4 border-primary-foreground/30 rounded-lg" />
-            <img
-              src={authImage}
-              alt="Shopping"
-              className="relative z-10 w-full max-w-md h-auto object-cover rounded-lg shadow-2xl"
-            />
-          </div>
+      {/* Left Side - Brown Background with Animated Text */}
+      <div className="hidden lg:flex lg:w-1/2 bg-primary flex-col items-center justify-center px-12">
+        <div className="max-w-md text-center">
+          <h1
+            className={`text-5xl md:text-6xl font-bold text-secondary mb-6 transition-all duration-700 ${
+              showTitle ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            }`}
+          >
+            AccentsHub
+          </h1>
+          <AnimatedText />
         </div>
       </div>
 
